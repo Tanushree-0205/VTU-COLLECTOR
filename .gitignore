@@ -4,3 +4,6 @@ vtu_numbers.db-shm
 vtu_numbers.db-wal
 .env
 .DS_Store
+
+.vercel
+.env*
