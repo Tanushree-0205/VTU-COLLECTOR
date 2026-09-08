@@ -22,6 +22,30 @@ async function ensureDb() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
+
+    // Trigger function: resets sequence to 1 if table empty, else to MAX(id)
+    await sql`
+      CREATE OR REPLACE FUNCTION reset_vtu_sequence()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        IF (SELECT COUNT(*) FROM vtu_numbers) = 0 THEN
+          PERFORM setval('vtu_numbers_id_seq', 1, false);
+        ELSE
+          PERFORM setval('vtu_numbers_id_seq', (SELECT MAX(id) FROM vtu_numbers));
+        END IF;
+        RETURN OLD;
+      END;
+      $$ LANGUAGE plpgsql;
+    `;
+
+    // Attach trigger to vtu_numbers table
+    await sql`DROP TRIGGER IF EXISTS reset_id_on_delete ON vtu_numbers`;
+    await sql`
+      CREATE TRIGGER reset_id_on_delete
+      AFTER DELETE ON vtu_numbers
+      FOR EACH ROW EXECUTE FUNCTION reset_vtu_sequence();
+    `;
+
     isDbInitialized = true;
     console.log('✅ Database initialized successfully');
   } catch (err) {
