@@ -1,37 +1,30 @@
 const express = require('express');
-const { sql } = require('@vercel/postgres');
+const Database = require('better-sqlite3');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 // --- Middleware ---
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Database Setup ---
-// Initialize table on startup if it doesn't exist
-async function initDb() {
-  try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS vtu_numbers (
-        id SERIAL PRIMARY KEY,
-        vtu_number VARCHAR(255) NOT NULL UNIQUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `;
-    console.log('✅ Database initialized successfully');
-  } catch (err) {
-    console.error('❌ Failed to initialize database. Make sure Vercel Postgres is connected:', err);
-  }
-}
+const db = new Database(path.join(__dirname, 'vtu_numbers.db'));
+db.pragma('journal_mode = WAL');
 
-initDb();
+db.exec(`
+  CREATE TABLE IF NOT EXISTS vtu_numbers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    vtu_number TEXT NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
 // --- API Routes ---
 
 // Save a VTU number
-app.post('/api/vtu', async (req, res) => {
+app.post('/api/vtu', (req, res) => {
   const { vtuNumber } = req.body;
 
   if (!vtuNumber || typeof vtuNumber !== 'string') {
@@ -50,10 +43,11 @@ app.post('/api/vtu', async (req, res) => {
   }
 
   try {
-    await sql`INSERT INTO vtu_numbers (vtu_number) VALUES (${trimmed})`;
+    const stmt = db.prepare('INSERT INTO vtu_numbers (vtu_number) VALUES (?)');
+    stmt.run(trimmed);
     return res.status(201).json({ success: true, message: 'VTU number saved successfully!' });
   } catch (err) {
-    if (err.code === '23505') { // Postgres unique violation error code
+    if (err.message.includes('UNIQUE constraint failed')) {
       return res.status(409).json({ success: false, message: 'This VTU number already exists.' });
     }
     console.error('Database error:', err);
@@ -62,22 +56,12 @@ app.post('/api/vtu', async (req, res) => {
 });
 
 // Get all saved VTU numbers (optional utility endpoint)
-app.get('/api/vtu', async (req, res) => {
-  try {
-    const { rows } = await sql`SELECT vtu_number, created_at FROM vtu_numbers ORDER BY created_at DESC`;
-    return res.json({ success: true, data: rows });
-  } catch (err) {
-    console.error('Database error:', err);
-    return res.status(500).json({ success: false, message: 'Server error. Please try again.' });
-  }
+app.get('/api/vtu', (req, res) => {
+  const rows = db.prepare('SELECT vtu_number, created_at FROM vtu_numbers ORDER BY created_at DESC').all();
+  return res.json({ success: true, data: rows });
 });
 
 // --- Start Server ---
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`✅ VTU Collector server running at http://localhost:${PORT}`);
-  });
-}
-
-// Export for Vercel Serverless Functions
-module.exports = app;
+app.listen(PORT, () => {
+  console.log(`✅ VTU Collector server running at http://localhost:${PORT}`);
+});
