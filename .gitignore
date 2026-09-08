@@ -1,0 +1,6 @@
+node_modules/
+vtu_numbers.db
+vtu_numbers.db-shm
+vtu_numbers.db-wal
+.env
+.DS_Store

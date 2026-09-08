@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="VTU Collector — Submit your VTU University Seat Number quickly and securely.">
+  <title>VTU Collector</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <main class="container" id="main-container">
+    <div class="card" id="vtu-card">
+      <div class="logo-badge" id="logo-badge">
+        <span>VTU</span>
+      </div>
+      <h1 id="page-title">VTU Collector</h1>
+      <p class="subtitle" id="page-subtitle">Enter your university seat number</p>
+
+      <form id="vtu-form" autocomplete="off">
+        <div class="input-group" id="input-group">
+          <input
+            type="text"
+            id="vtu-input"
+            name="vtuNumber"
+            placeholder="e.g. VTU12345"
+            maxlength="13"
+            spellcheck="false"
+            required
+            aria-label="VTU University Seat Number"
+          >
+          <div class="input-glow"></div>
+        </div>
+
+        <button type="submit" id="submit-btn" aria-label="Submit VTU Number">
+          <span class="btn-text">Enter</span>
+          <span class="btn-loader" id="btn-loader">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31.4 31.4" stroke-linecap="round"/>
+            </svg>
+          </span>
+        </button>
+      </form>
+
+      <div class="message-area" id="message-area" role="alert" aria-live="polite"></div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
