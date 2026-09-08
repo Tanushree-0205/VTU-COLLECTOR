@@ -10,8 +10,10 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Database Setup ---
-// Initialize table on startup if it doesn't exist
-async function initDb() {
+let isDbInitialized = false;
+
+async function ensureDb() {
+  if (isDbInitialized) return;
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS vtu_numbers (
@@ -20,13 +22,13 @@ async function initDb() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
+    isDbInitialized = true;
     console.log('✅ Database initialized successfully');
   } catch (err) {
     console.error('❌ Failed to initialize database. Make sure Vercel Postgres is connected:', err);
+    throw err;
   }
 }
-
-initDb();
 
 // --- API Routes ---
 
@@ -50,6 +52,7 @@ app.post('/api/vtu', async (req, res) => {
   }
 
   try {
+    await ensureDb();
     await sql`INSERT INTO vtu_numbers (vtu_number) VALUES (${trimmed})`;
     return res.status(201).json({ success: true, message: 'VTU number saved successfully!' });
   } catch (err) {
