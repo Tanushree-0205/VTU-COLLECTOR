@@ -75,7 +75,7 @@ app.get('/api/vtu', async (req, res) => {
 // --- Start Server ---
 if (require.main === module) {
   app.listen(PORT, () => {
-    console.log(\`✅ VTU Collector server running at http://localhost:\${PORT}\`);
+    console.log(`✅ VTU Collector server running at http://localhost:${PORT}`);
   });
 }
 
